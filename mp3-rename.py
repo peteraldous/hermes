@@ -18,28 +18,37 @@ class Command:
     return output
 
 class Machine:
-  def __init__(self, tag_names, tag_indices, regex, command):
-    self.tag_names = tag_names
+  def __init__(self, tag_list, tag_indices, regex, command):
+    self.tag_list = tag_list
     self.tag_indices = tag_indices
     self.regex = regex
     self.command = command
 
-mac_tag_names =   { 'Title'     : ['TIT2'],
-                    'Artist'    : ['TPE1', 'TPE2', 'TPE3'],
-                    'Tracknum'  : ['TRCK'], # may be in the form "4" or "4/16"
-                    'Album'     : ['TALB'],
-                    'Composer'  : ['TCOM'],
-                    'Genre'     : ['TCON'],
-                    'Year'      : ['TYER'],
-}
-linux_tag_names = { 'Title'     : ['Title'],
-                    'Artist'    : ['Artist'],
-                    'Tracknum'  : ['Track'], # may be in the form "4" or "4/16"
-                    'Album'     : ['Album'],
-                    'Composer'  : [],
-                    'Genre'     : ['Genre'],
-                    'Year'      : ['Year'],
-}
+  class TagList:
+    def __init__(self, title, artist, num, album, composer, genre, year):
+      self.title = title
+      self.artist = artist
+      self.num = num # may be in the form "4" or "4/16"
+      self.album = album
+      self.composer = composer
+      self.genre = genre
+      self.year = year
+
+mac_tag_names = Machine.TagList(['TIT2'],
+                                ['TPE1', 'TPE2', 'TPE3'],
+                                ['TRCK'],
+                                ['TALB'],
+                                ['TCOM'],
+                                ['TCON'],
+                                ['TYER'])
+linux_tag_names = Machine.TagList(['Title'],
+                                  ['Artist'],
+                                  ['Track'],
+                                  ['Album'],
+                                  [],
+                                  ['Genre'],
+                                  ['Year'])
+
 mac_regex =   "=== ([A-Z0-9a-z]*) .*: ([^:]*)$"
 linux_regex = "([A-Z0-9a-z]*): (.*)$"
 mac_tag_indices = {'tag' : 1, 'value' : 2}
@@ -52,6 +61,8 @@ machine_instances = {
           'linux' : Machine(linux_tag_names, linux_tag_indices, linux_regex, linux_command)
 }
 
+# TODO make a class for an MP3 file and get rid of the dicts
+
 parser = argparse.ArgumentParser(description =
            "Rename an mp3 file according to its ID3 tag.")
 parser.add_argument('files', metavar='f', nargs='+',
@@ -59,6 +70,9 @@ parser.add_argument('files', metavar='f', nargs='+',
 parser.add_argument('--os', '-o', default='linux', action='store',
                     choices=['linux', 'mac'],
                     help='The operating system being used.')
+parser.add_argument('--strict', '-s', default=True, action='store',
+                    type=bool,
+                    help='If true, requires metadata for all parts of the format.')
 
 options = parser.parse_args()
 machine = machine_instances[options.os]
@@ -76,14 +90,23 @@ for mp3_file in options.files:
       tag_match.group(machine.tag_indices['value']).strip()
   all_tags[mp3_file] = tags
 
-def get_best_tag_value(tags, tag_list):
+def get_best_tag_value(tag_list, tags):
   for preferred_tag in tag_list:
     if tags[preferred_tag] is not None:
       return tags[preferred_tag]
   return None
 
-def get_tag_value(machine, filename, tags):
-  pass
+def get_tag_value(tag_list, filename, tags):
+  result = get_best_tag_value(tag_list, tags)
+  if result is None:
+    if strict:
+      raise "Strict: no tags found from the list" + tag_list
+    else:
+      return filename.split("/").pop()
+  else:
+    return result
 
-for (mp3_file, tags) in all_tags:
-  title = get_tag_value(machine, mp3_file, tags)
+#print(all_tags)
+for mp3_file, tags in all_tags.items():
+  title = get_tag_value(machine.tag_list.title, mp3_file, tags)
+  artist = get_tag_value(machine.tag_list.artist, mp3_file, tags)
