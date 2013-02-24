@@ -30,7 +30,7 @@ import re
 import argparse
 from machine import Machine
 
-# TODO make a class for an MP3 file and get rid of the dicts
+# TODO read a config file, which should be overridden by the command-line arguments
 
 parser = argparse.ArgumentParser(description =
            "Rename an mp3 file according to its ID3 tag.")
@@ -39,7 +39,7 @@ parser.add_argument('files', metavar='f', nargs='+',
 parser.add_argument('--os', '-o', default='linux', action='store',
                     choices=['linux', 'mac'],
                     help='The operating system being used.')
-parser.add_argument('--strict', '-s', default=True, action='store',
+parser.add_argument('--strict', '-s', default=False, action='store',
                     type=bool,
                     help='If true, requires metadata for all parts of the format.')
 
@@ -48,36 +48,51 @@ machine = Machine.instances[options.os]
 if machine is None:
   raise "Could not find machine named " + options.os
 
-all_tags = {}
+mp3_files = []
+
+class MP3File:
+  def __init__(self, filename, machine):
+    self.filename = filename
+    self.tags = {}
+    info = str(machine.command.execute(filename), encoding='utf-8')
+    for line in info.splitlines():
+      tag_match = re.search(machine.regex, line)
+      if tag_match is None:
+        continue
+      self.tags[tag_match.group(machine.tag_indices['tag'])] = \
+        tag_match.group(machine.tag_indices['value']).strip()
+    self.title = self.get_tag_value(machine.tag_list.title)
+    self.artist = self.get_tag_value(machine.tag_list.artist)
+    self.num = self.get_tag_value(machine.tag_list.num)
+    self.album = self.get_tag_value(machine.tag_list.album)
+    self.composer = self.get_tag_value(machine.tag_list.composer)
+    self.genre = self.get_tag_value(machine.tag_list.genre)
+    self.year = self.get_tag_value(machine.tag_list.year)
+
+  def get_best_tag_value(self, tag_list):
+    for preferred_tag in tag_list:
+      if self.tags[preferred_tag] is not None:
+        return self.tags[preferred_tag]
+    return None
+
+  def get_tag_value(self, tag_list):
+    result = self.get_best_tag_value(tag_list)
+    if result is None:
+      if options.strict:
+        raise "Strict: no tags found from the list" + tag_list
+      else:
+        return self.filename.split("/").pop()
+    else:
+      return result
+
+  def __str__(self):
+    return '"' + self.artist + '/' + self.album + '/' + self.num + ' - ' + self.title + '.mp3"'
+
+  def __repr__(self):
+    return self.__str__()
 
 for mp3_file in options.files:
-  tags = {}
-  info = str(machine.command.execute(mp3_file), encoding='utf-8')
-  for line in info.splitlines():
-    tag_match = re.search(machine.regex, line)
-    if tag_match is None:
-      continue
-    tags[tag_match.group(machine.tag_indices['tag'])] = \
-      tag_match.group(machine.tag_indices['value']).strip()
-  all_tags[mp3_file] = tags
+  mp3_files.append(MP3File(mp3_file, machine))
 
-def get_best_tag_value(tag_list, tags):
-  for preferred_tag in tag_list:
-    if tags[preferred_tag] is not None:
-      return tags[preferred_tag]
-  return None
 
-def get_tag_value(tag_list, filename, tags):
-  result = get_best_tag_value(tag_list, tags)
-  if result is None:
-    if strict:
-      raise "Strict: no tags found from the list" + tag_list
-    else:
-      return filename.split("/").pop()
-  else:
-    return result
-
-print(all_tags)
-for mp3_file, tags in all_tags.items():
-  title = get_tag_value(machine.tag_list.title, mp3_file, tags)
-  artist = get_tag_value(machine.tag_list.artist, mp3_file, tags)
+print(mp3_files)
