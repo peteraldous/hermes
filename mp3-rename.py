@@ -3,6 +3,7 @@
 # TODO
 # one line to give the program's name and an idea of what it does.
 # Copyright (C) 2013  Petey Aldous
+# TODO contact info
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -50,6 +51,7 @@ if machine is None:
 
 mp3_files = []
 
+# TODO this should probably go in a separate class file
 class MP3File:
   def __init__(self, filename, machine):
     self.filename = filename
@@ -96,3 +98,11 @@ for mp3_file in options.files:
 
 
 print(mp3_files)
+
+# TODO figure out the format for the destination files
+# TODO determine which files need to be copied by reading the database
+# TODO copy the files
+# TODO update the database
+
+# TODO check if any files have been copied to all clients
+# TODO if so, remove them and any empty directories that contained them
