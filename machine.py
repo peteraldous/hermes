@@ -41,11 +41,12 @@ class Command:
 class Machine:
   instances = {}
 
-  def __init__(self, tag_list, tag_indices, regex, command):
+  def __init__(self, tag_list, tag_indices, regex, command, directory_delimiter='/'):
     self.tag_list = tag_list
     self.tag_indices = tag_indices
     self.regex = regex
     self.command = command
+    self.directory_delimiter = '/'
 
   class Tags:
     def __init__(self, name, tag_list):

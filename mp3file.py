@@ -25,10 +25,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import re
+import os
 
 class MP3File:
   def __init__(self, filename, machine, strict=False):
-    self.filename = filename
+    self.full_filename = filename
+    (self.current_directory, self.filename) = os.path.split(filename)
+    self.directory_delimiter = machine.directory_delimiter
     self.tags = {}
     info = str(machine.command.execute(filename), encoding='utf-8')
     for line in info.splitlines():
@@ -37,13 +40,15 @@ class MP3File:
         continue
       self.tags[tag_match.group(machine.tag_indices['tag'])] = \
         tag_match.group(machine.tag_indices['value']).strip()
+    # TODO when including customizable formatting, make things that aren't
+    #   in the format optional. This is currently hard-coded.
     self.title = self.get_tag_value(machine.tag_list.title, strict)
     self.artist = self.get_tag_value(machine.tag_list.artist, strict)
     self.num = self.get_tag_value(machine.tag_list.num, strict)
     self.album = self.get_tag_value(machine.tag_list.album, strict)
-    self.composer = self.get_tag_value(machine.tag_list.composer, strict)
-    self.genre = self.get_tag_value(machine.tag_list.genre, strict)
-    self.year = self.get_tag_value(machine.tag_list.year, strict)
+    self.composer = self.get_tag_value(machine.tag_list.composer, False)
+    self.genre = self.get_tag_value(machine.tag_list.genre, False)
+    self.year = self.get_tag_value(machine.tag_list.year, False)
 
   class StrictError(Exception):
     def __init__(self, value):
@@ -64,14 +69,31 @@ class MP3File:
       if strict:
         raise MP3File.StrictError("get_tag_value: " +
               "strict is True and there is no metadata matching " +
-              str(tag_list))
+              str(tag_list) + " in " + self.filename)
       else:
-        return self.filename.split("/").pop()
+        return None
     else:
       return result
 
+  def absolute_path(self, root=None):
+    if root is None:
+      current_directory = self.current_directory
+    else:
+      current_directory = root
+    return os.path.join(current_directory, self.relative_path())
+
+  def relative_path(self):
+    # TODO this needs to be flexible and support formatting
+    # TODO this also needs to fail well - what happens if artist is None?
+    if self.title is None:
+      return os.path.join(self.artist, self.album,
+        str(self.num + " - " + self.title)) + '.mp3'
+    else:
+      # TODO for now, just punt
+      return self.filename
+
   def __str__(self):
-    return '"' + self.artist + '/' + self.album + '/' + self.num + ' - ' + self.title + '.mp3"'
+    return self.relative_path()
 
   def __repr__(self):
     return self.__str__()
