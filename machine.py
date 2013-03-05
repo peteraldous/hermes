@@ -47,15 +47,29 @@ class Machine:
     self.regex = regex
     self.command = command
 
+  class Tags:
+    def __init__(self, name, tag_list):
+      self.name = name
+      self.tag_list = tag_list
+
+    def __iter__(self):
+      return self.tag_list.__iter__()
+
+    def __str__(self):
+      return self.name
+
+    def __repr__(self):
+      return self.__str__()
+
   class TagList:
     def __init__(self, title, artist, num, album, composer, genre, year):
-      self.title = title
-      self.artist = artist
-      self.num = num # may be in the form "4" or "4/16"
-      self.album = album
-      self.composer = composer
-      self.genre = genre
-      self.year = year
+      self.title = Machine.Tags('title', title)
+      self.artist = Machine.Tags('artist', artist)
+      self.num = Machine.Tags('num', num) # may be in the form "4" or "4/16"
+      self.album = Machine.Tags('album', album)
+      self.composer = Machine.Tags('composer', composer)
+      self.genre = Machine.Tags('genre', genre)
+      self.year = Machine.Tags('year', year)
 
 mac_tag_names = Machine.TagList(['TIT2'],
                                 ['TPE1', 'TPE2', 'TPE3'],

@@ -40,8 +40,7 @@ parser.add_argument('files', metavar='f', nargs='+',
 parser.add_argument('--os', '-o', default='linux', action='store',
                     choices=['linux', 'mac'],
                     help='The operating system being used.')
-parser.add_argument('--strict', '-s', default=False, action='store',
-                    type=bool,
+parser.add_argument('--strict', '-s', action='store_true',
                     help='If true, requires metadata for all parts of the format.')
 
 options = parser.parse_args()
@@ -52,7 +51,7 @@ if machine is None:
 mp3_files = []
 
 for mp3_file in options.files:
-  mp3_files.append(MP3File(mp3_file, machine))
+  mp3_files.append(MP3File(mp3_file, machine, options.strict))
 
 
 print(mp3_files)
