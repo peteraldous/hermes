@@ -86,11 +86,11 @@ class MP3File:
     # TODO this needs to be flexible and support formatting
     # TODO this also needs to fail well - what happens if artist is None?
     if self.title is None:
-      return os.path.join(self.artist, self.album,
-        str(self.num + " - " + self.title)) + '.mp3'
-    else:
       # TODO for now, just punt
       return self.filename
+    else:
+      return os.path.join(self.artist, self.album,
+        str(self.num + " - " + self.title)) + '.mp3'
 
   def __str__(self):
     return self.absolute_path()
