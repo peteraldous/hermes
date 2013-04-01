@@ -77,10 +77,10 @@ class MP3File:
 
   def absolute_path(self, root=None):
     if root is None:
-      current_directory = self.current_directory
+      dir = self.current_directory
     else:
-      current_directory = root
-    return os.path.join(current_directory, self.relative_path())
+      dir = root
+    return os.path.abspath(os.path.join(dir, self.relative_path()))
 
   def relative_path(self):
     # TODO this needs to be flexible and support formatting
@@ -93,7 +93,7 @@ class MP3File:
       return self.filename
 
   def __str__(self):
-    return self.relative_path()
+    return self.absolute_path()
 
   def __repr__(self):
     return self.__str__()
