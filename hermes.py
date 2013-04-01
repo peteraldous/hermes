@@ -57,6 +57,7 @@ for mp3_file in options.files:
 
 #print(mp3_files)
 
+# TODO get the destination directory from a config file or parameter
 destination_directory = os.path.normpath('/home/petey/Music/')
 
 for file in mp3_files:
