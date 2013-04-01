@@ -28,6 +28,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import argparse
+import os
 from machine import Machine
 from mp3file import MP3File
 
@@ -54,7 +55,12 @@ for mp3_file in options.files:
   mp3_files.append(MP3File(mp3_file, machine, options.strict))
 
 
-print(mp3_files)
+#print(mp3_files)
+
+destination_directory = os.path.normpath('/home/petey/Music/')
+
+for file in mp3_files:
+  print(file.absolute_path(destination_directory))
 
 # TODO figure out the format for the destination files
 # TODO determine which files need to be copied by reading the database
