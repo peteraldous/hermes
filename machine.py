@@ -24,6 +24,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import subprocess
+import os
 
 class Command:
   def __init__(self, before, after):
@@ -41,11 +42,12 @@ class Command:
 class Machine:
   instances = {}
 
-  def __init__(self, tag_list, tag_indices, regex, command, directory_delimiter='/'):
+  def __init__(self, tag_list, tag_indices, regex, command, music_directory, directory_delimiter='/'):
     self.tag_list = tag_list
     self.tag_indices = tag_indices
     self.regex = regex
     self.command = command
+    self.music_directory = music_directory
     self.directory_delimiter = '/'
 
   class Tags:
@@ -93,12 +95,20 @@ mac_tag_indices = {'tag' : 1, 'value' : 2}
 linux_tag_indices = {'tag' : 1, 'value' : 2}
 mac_ls = Command(["id3info"], [])
 linux_ls = Command(["id3", "-lR"], [])
+# TODO get username instead of hardcoded
+# TODO make sure this is configurable
+# /Users/petey/Music/iTunes/iTunes\ Media/Music
+mac_music_directory = os.path.join("/", "Users", "petey", "Music", "iTunes", "iTunes Media", "Music")
+# /home/petey/Music
+linux_music_directory = os.path.join("/", "home", "petey", "Music")
 
 Machine.instances['mac'] = Machine(mac_tag_names,
       mac_tag_indices,
       mac_regex,
-      mac_ls)
+      mac_ls,
+      mac_music_directory)
 Machine.instances['linux'] = Machine(linux_tag_names,
       linux_tag_indices,
       linux_regex,
-      linux_ls)
+      linux_ls,
+      linux_music_directory)
